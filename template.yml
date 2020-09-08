@@ -1,0 +1,66 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  Automaticaly start and stop RDS instances between a period of time
+Transform:
+- AWS::Serverless-2016-10-31
+Resources:
+  RDSStartFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/start.handler
+      Runtime: nodejs10.x
+      MemorySize: 128
+      Timeout: 100
+      Description: A Lambda function that returns a static string.
+      Events:
+        AuroraMastercard:
+          Type: Schedule
+          Properties:
+            Schedule: cron(0 4 ? * MON-FRI *)
+            Input: '{ "dbClusterIdentifier": "<id>" }'
+        RDSDataEnrichment:
+          Type: Schedule
+          Properties:
+            Schedule: cron(1 4 ? * MON-FRI *)
+            Input: '{ "dbInstanceIdentifier": "<id>" }'    
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - rds:StartDBInstance
+                - rds:StartDBCluster
+              Resource: 
+                - <arn>:cluster:<id>
+                - <arn>:db:<id>
+  RDSStopFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/stop.handler
+      Runtime: nodejs10.x
+      MemorySize: 128
+      Timeout: 100
+      Description: A Lambda function that returns a static string.
+      Events:
+        AuroraMastercard:
+          Type: Schedule
+          Properties:
+            Schedule: cron(0 16 ? * MON-FRI *)
+            Input: '{ "dbClusterIdentifier": "<id>" }'
+        RDSDataEnrichment:
+          Type: Schedule
+          Properties:
+            Schedule: cron(1 16 ? * MON-FRI *)
+            Input: '{ "dbInstanceIdentifier": "<id>" }'    
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - rds:StopDBInstance
+                - rds:StopDBCluster
+              Resource: 
+                - <arn>:cluster:<id>
+                - <arn>:db:<id>
